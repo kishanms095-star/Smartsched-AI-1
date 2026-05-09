@@ -1,2 +1,2 @@
 # Smartsched-AI-1
-Smart Timetable Scheduler
+AI-Powered Classroom &amp; Timetable Scheduler

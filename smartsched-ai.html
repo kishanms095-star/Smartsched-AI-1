@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartSched AI – Intelligent Timetable Scheduling</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #3B7FE8;
+  --blue-light: #EEF4FD;
+  --blue-mid: #C7DCF9;
+  --purple: #7C5CFC;
+  --purple-light: #F2EEFF;
+  --purple-mid: #D4C8FD;
+  --indigo: #4F5DE8;
+  --teal: #22C3A6;
+  --teal-light: #E6FAF6;
+  --amber: #F59E0B;
+  --amber-light: #FEF3C7;
+  --red: #EF4444;
+  --red-light: #FEF2F2;
+  --green: #10B981;z
+  --green-light: #ECFDF5;
+  --bg: #F5F7FC;
+  --sidebar: #FFFFFF;
+  --card: #FFFFFF;
+  --text: #1A1F36;
+  --text-2: #4A5073;
+  --text-3: #8B90A7;
+  --border: #E8EBF4;
+  --shadow: 0 1px 3px rgba(59,127,232,0.06), 0 4px 16px rgba(59,127,232,0.06);
+  --shadow-md: 0 4px 12px rgba(59,127,232,0.10), 0 12px 32px rgba(59,127,232,0.08);
+  --radius: 14px;
+  --radius-sm: 8px;
+  --sidebar-w: 240px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+h1,h2,h3,h4,h5 { font-family: 'Sora', sans-serif; }
+
+/* ── SCREENS ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ══════════════ LOGIN ══════════════ */
+#login-screen {
+  min-height: 100vh;
+  display: none;
+  background: linear-gradient(135deg, #EEF4FD 0%, #F2EEFF 50%, #EEF4FD 100%);
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+#login-screen.active { display: flex; }
+
+.login-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.login-bg-orb.a { width: 500px; height: 500px; background: #B8D4FD; top: -150px; right: -100px; }
+.login-bg-orb.b { width: 400px; height: 400px; background: #D4C8FD; bottom: -120px; left: -80px; }
+
+.login-card {
+  background: white;
+  border-radius: 24px;
+  padding: 48px 44px;
+  width: 420px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  z-index: 1;
+  animation: fadeUp .5s ease both;
+}
+.login-logo {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 32px;
+}
+.login-logo-icon {
+  width: 40px; height: 40px; border-radius: 11px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+}
+.login-logo-icon svg { width: 20px; height: 20px; }
+.login-logo-text { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+.login-logo-text span { color: var(--blue); }
+
+.login-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.login-card p { color: var(--text-3); margin-bottom: 28px; font-size: 13px; }
+
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-2); margin-bottom: 7px; }
+.form-group input {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text); background: #FAFBFF;
+  transition: border-color .2s, box-shadow .2s; outline: none;
+}
+.form-group input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,127,232,.12); }
+.form-hint { font-size: 11.5px; color: var(--text-3); margin-top: 5px; }
+
+.btn-primary {
+  width: 100%; padding: 13px; border: none; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--blue), var(--indigo));
+  color: white; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: opacity .2s, transform .15s; letter-spacing: .3px;
+}
+.btn-primary:hover { opacity: .92; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+.login-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
+.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.login-divider span { font-size: 11.5px; color: var(--text-3); }
+
+.login-roles { display: flex; gap: 8px; }
+.role-tag {
+  flex: 1; padding: 9px 0; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  text-align: center; font-size: 12px; font-weight: 500; color: var(--text-2);
+  cursor: pointer; transition: all .2s;
+}
+.role-tag:hover, .role-tag.active { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+
+/* ══════════════ LAYOUT ══════════════ */
+.app-layout { display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); background: white; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0;
+  height: 100vh; z-index: 100;
+  animation: slideInLeft .4s ease both;
+}
+.sidebar-header {
+  padding: 22px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar-logo-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sidebar-logo-icon svg { width: 16px; height: 16px; }
+.sidebar-title { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; }
+.sidebar-title span { color: var(--blue); }
+
+.sidebar-section-label {
+  padding: 16px 20px 6px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-3);
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 16px; margin: 1px 8px; border-radius: 9px;
+  cursor: pointer; font-size: 13.5px; font-weight: 500;
+  color: var(--text-2); transition: all .18s;
+  position: relative;
+}
+.nav-item:hover { background: var(--blue-light); color: var(--blue); }
+.nav-item.active { background: var(--blue-light); color: var(--blue); }
+.nav-item.active .nav-icon { color: var(--blue); }
+.nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: .75; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: white;
+  font-size: 10px; font-weight: 700; border-radius: 20px;
+  padding: 1px 6px; line-height: 1.6;
+}
+.nav-badge.blue { background: var(--blue); }
+
+.sidebar-footer {
+  margin-top: auto; padding: 16px 12px;
+  border-top: 1px solid var(--border);
+}
+.user-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-radius: 10px;
+  background: var(--bg); cursor: pointer; transition: background .18s;
+}
+.user-card:hover { background: var(--blue-light); }
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.user-name { font-size: 12.5px; font-weight: 600; }
+.user-role { font-size: 11px; color: var(--text-3); }
+
+/* ── MAIN ── */
+.main-content {
+  margin-left: var(--sidebar-w); flex: 1;
+  display: flex; flex-direction: column; min-height: 100vh;
+}
+
+.topbar {
+  background: white; border-bottom: 1px solid var(--border);
+  padding: 0 28px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-left { display: flex; flex-direction: column; }
+.topbar-title { font-family: 'Sora', sans-serif; font-size: 17px; font-weight: 700; }
+.topbar-sub { font-size: 12px; color: var(--text-3); }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-btn {
+  width: 34px; height: 34px; border-radius: 9px; background: var(--bg);
+  border: 1px solid var(--border); display: flex; align-items: center;
+  justify-content: center; cursor: pointer; transition: all .18s; position: relative;
+}
+.topbar-btn:hover { background: var(--blue-light); border-color: var(--blue-mid); }
+.topbar-btn svg { width: 16px; height: 16px; color: var(--text-2); }
+.notif-dot {
+  position: absolute; top: 7px; right: 7px;
+  width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 1.5px solid white;
+}
+
+.ai-pill {
+  display: flex; align-items: center; gap: 7px;
+  background: linear-gradient(135deg, var(--blue-light), var(--purple-light));
+  border: 1px solid var(--blue-mid); border-radius: 20px;
+  padding: 6px 13px; font-size: 12px; font-weight: 600; color: var(--indigo);
+  cursor: pointer; transition: all .2s;
+}
+.ai-pill:hover { box-shadow: 0 2px 8px rgba(79,93,232,.2); }
+.ai-pill-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+
+.page-body { padding: 24px 28px; flex: 1; }
+
+/* ══════════════ DASHBOARD ══════════════ */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 22px;
+}
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 22px;
+  box-shadow: var(--shadow); transition: box-shadow .2s, transform .2s;
+  animation: fadeUp .4s ease both;
+}
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.stat-card:nth-child(2) { animation-delay: .06s; }
+.stat-card:nth-child(3) { animation-delay: .12s; }
+.stat-card:nth-child(4) { animation-delay: .18s; }
+.stat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.stat-icon-wrap {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.stat-icon-wrap svg { width: 18px; height: 18px; }
+.stat-trend {
+  font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 20px;
+}
+.trend-up { background: var(--green-light); color: var(--green); }
+.trend-down { background: var(--red-light); color: var(--red); }
+.trend-neu { background: var(--amber-light); color: var(--amber); }
+.stat-value { font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.1; margin-bottom: 4px; }
+.stat-label { font-size: 12.5px; color: var(--text-3); font-weight: 500; }
+
+/* Dashboard grid */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr 340px; gap: 18px; margin-bottom: 18px; }
+.dash-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  animation: fadeUp .45s ease both;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 14px; border-bottom: 1px solid var(--border);
+}
+.card-title { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; }
+.card-body { padding: 16px 20px; }
+.card-action {
+  font-size: 12px; color: var(--blue); font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+}
+.card-action:hover { text-decoration: underline; }
+
+/* Mini timetable grid */
+.mini-tt {
+  display: grid;
+  grid-template-columns: 56px repeat(5, 1fr);
+  gap: 3px;
+  font-size: 11px;
+}
+.mini-tt-head {
+  padding: 5px 4px; text-align: center; font-weight: 600;
+  color: var(--text-3); font-size: 10.5px;
+  background: var(--bg); border-radius: 5px;
+}
+.mini-tt-time {
+  padding: 5px 4px; text-align: right; font-size: 10px;
+  color: var(--text-3); display: flex; align-items: center; justify-content: flex-end;
+}
+.mini-tt-cell {
+  padding: 5px 4px; border-radius: 5px; min-height: 36px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; font-size: 10px; line-height: 1.3; font-weight: 500;
+}
+.tt-blue { background: var(--blue-light); color: var(--blue); }
+.tt-purple { background: var(--purple-light); color: var(--purple); }
+.tt-teal { background: var(--teal-light); color: var(--teal); }
+.tt-amber { background: var(--amber-light); color: var(--amber); }
+.tt-empty { background: #F8F9FC; }
+.tt-conflict { background: var(--red-light); color: var(--red); border: 1px dashed var(--red); }
+
+/* Bar chart */
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 90px; padding: 8px 0; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.bar {
+  width: 100%; border-radius: 5px 5px 0 0;
+  transition: opacity .2s;
+}
+.bar:hover { opacity: .8; }
+.bar-label { font-size: 10px; color: var(--text-3); font-weight: 500; }
+
+/* Donut chart */
+.donut-wrap { display: flex; align-items: center; gap: 20px; }
+.donut { width: 90px; height: 90px; flex-shrink: 0; }
+.donut-legend { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.legend-label { flex: 1; color: var(--text-2); }
+.legend-val { font-weight: 700; color: var(--text); }
+
+/* AI suggestions */
+.ai-card {
+  background: linear-gradient(135deg, #F0F4FF 0%, #F5F0FF 100%);
+  border: 1px solid var(--blue-mid);
+}
+.ai-card .card-header { border-color: rgba(59,127,232,.15); }
+.ai-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 20px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  color: white;
+}
+.ai-suggestion {
+  display: flex; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid rgba(59,127,232,.1);
+}
+.ai-suggestion:last-child { border-bottom: none; padding-bottom: 0; }
+.ai-sugg-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.ai-sugg-content { flex: 1; }
+.ai-sugg-title { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.ai-sugg-desc { font-size: 11.5px; color: var(--text-2); line-height: 1.45; }
+.ai-sugg-actions { display: flex; gap: 6px; margin-top: 7px; }
+.btn-xs {
+  padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600;
+  cursor: pointer; border: none; transition: all .18s;
+}
+.btn-xs.accept { background: var(--blue); color: white; }
+.btn-xs.accept:hover { opacity: .88; }
+.btn-xs.dismiss { background: rgba(59,127,232,.1); color: var(--blue); }
+.btn-xs.dismiss:hover { background: rgba(59,127,232,.2); }
+
+/* Conflict alerts */
+.conflict-list { display: flex; flex-direction: column; gap: 8px; }
+.conflict-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 11px 13px; border-radius: 9px;
+  border: 1px solid;
+}
+.conflict-item.high { background: var(--red-light); border-color: rgba(239,68,68,.25); }
+.conflict-item.med { background: var(--amber-light); border-color: rgba(245,158,11,.25); }
+.conflict-item.low { background: var(--blue-light); border-color: rgba(59,127,232,.2); }
+.conflict-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.conflict-text { font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.conflict-text strong { color: var(--text); display: block; font-size: 12.5px; margin-bottom: 2px; }
+.conflict-sev {
+  margin-left: auto; font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px; flex-shrink: 0;
+}
+.sev-high { background: var(--red); color: white; }
+.sev-med { background: var(--amber); color: white; }
+.sev-low { background: var(--blue); color: white; }
+
+/* Faculty workload */
+.workload-list { display: flex; flex-direction: column; gap: 10px; }
+.workload-item { display: flex; align-items: center; gap: 12px; }
+.w-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.w-info { flex: 1; min-width: 0; }
+.w-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.w-dept { font-size: 11px; color: var(--text-3); }
+.w-bar-wrap { flex: 1.5; }
+.w-bar-bg { background: var(--bg); border-radius: 20px; height: 6px; overflow: hidden; }
+.w-bar-fill { height: 100%; border-radius: 20px; transition: width .6s ease; }
+.w-hrs { font-size: 11.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; width: 40px; text-align: right; }
+
+/* ══════════════ TIMETABLE FORM ══════════════ */
+.form-section-title {
+  font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--text-2); text-transform: uppercase; letter-spacing: .7px;
+  margin-bottom: 14px; margin-top: 22px; display: flex; align-items: center; gap: 8px;
+}
+.form-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+.field-label { font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 7px; display: block; }
+.field-input, .field-select, .field-textarea {
+  width: 100%; padding: 10px 13px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 13.5px;
+  color: var(--text); background: #FAFBFF; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.field-input:focus, .field-select:focus, .field-textarea:focus {
+  border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,127,232,.1);
+}
+.field-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B90A7' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
+.field-textarea { resize: vertical; min-height: 80px; }
+.field-note { font-size: 11.5px; color: var(--text-3); margin-top: 5px; }
+
+.tag-input-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); background: #FAFBFF; }
+.tag-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--blue-light); color: var(--blue); border-radius: 20px;
+  padding: 3px 10px; font-size: 12px; font-weight: 500;
+}
+.tag-chip .remove { cursor: pointer; opacity: .6; font-size: 13px; }
+.tag-chip .remove:hover { opacity: 1; }
+.tag-input-inner { border: none; outline: none; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 13px; min-width: 80px; }
+
+.constraints-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.constraint-toggle {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 9px;
+  cursor: pointer; transition: all .18s; background: #FAFBFF;
+}
+.constraint-toggle:hover { border-color: var(--blue); background: var(--blue-light); }
+.constraint-toggle.on { border-color: var(--blue); background: var(--blue-light); }
+.toggle-track {
+  width: 34px; height: 18px; border-radius: 20px; background: var(--border);
+  flex-shrink: 0; position: relative; transition: background .2s;
+}
+.constraint-toggle.on .toggle-track { background: var(--blue); }
+.toggle-thumb {
+  width: 13px; height: 13px; background: white; border-radius: 50%;
+  position: absolute; top: 2.5px; left: 2.5px; transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.constraint-toggle.on .toggle-thumb { transform: translateX(16px); }
+.toggle-label { font-size: 12.5px; font-weight: 500; color: var(--text-2); }
+.constraint-toggle.on .toggle-label { color: var(--blue); }
+
+.form-actions { display: flex; align-items: center; gap: 12px; margin-top: 28px; }
+.btn-generate {
+  display: flex; align-items: center; gap: 9px;
+  padding: 13px 28px; border: none; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--blue), var(--indigo));
+  color: white; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s; letter-spacing: .3px;
+}
+.btn-generate:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(59,127,232,.35); }
+.btn-generate svg { width: 16px; height: 16px; }
+.btn-secondary {
+  padding: 13px 22px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  background: white; color: var(--text-2); font-family: 'Sora', sans-serif;
+  font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all .18s;
+}
+.btn-secondary:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+
+/* ══════════════ TIMETABLE VIEW ══════════════ */
+.tt-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.tt-dept-filter {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.filter-chip {
+  padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  border: 1.5px solid var(--border); background: white; color: var(--text-2);
+  cursor: pointer; transition: all .18s;
+}
+.filter-chip:hover, .filter-chip.active { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+.filter-chip.purple.active { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+.filter-chip.teal.active { border-color: var(--teal); background: var(--teal-light); color: var(--teal); }
+
+.tt-export-btns { margin-left: auto; display: flex; gap: 8px; }
+.btn-outline {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  background: white; color: var(--text-2); font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: all .18s;
+}
+.btn-outline:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+.btn-outline svg { width: 13px; height: 13px; }
+
+.full-tt-wrap {
+  background: white; border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+}
+.full-tt {
+  display: grid;
+  grid-template-columns: 70px repeat(5, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+.full-tt-header {
+  display: contents;
+}
+.tt-head-cell {
+  padding: 13px 10px; text-align: center; font-size: 12.5px; font-weight: 700;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border); color: var(--text-2);
+}
+.tt-head-cell:last-child { border-right: none; }
+.tt-time-cell {
+  padding: 0 8px; border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); font-size: 10.5px;
+  color: var(--text-3); display: flex; align-items: center; justify-content: flex-end;
+  background: var(--bg); font-weight: 600;
+}
+.tt-slot {
+  padding: 5px; border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); min-height: 70px;
+}
+.tt-slot:last-child { border-right: none; }
+.tt-event {
+  border-radius: 7px; padding: 8px 9px; height: 100%; cursor: pointer;
+  transition: transform .15s, box-shadow .15s;
+}
+.tt-event:hover { transform: scale(1.02); box-shadow: 0 3px 10px rgba(0,0,0,.1); }
+.tt-event-course { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.tt-event-room { font-size: 10.5px; opacity: .75; }
+.tt-event-faculty { font-size: 10.5px; opacity: .8; display: flex; align-items: center; gap: 3px; }
+.tt-event.blue { background: var(--blue-light); color: var(--blue); }
+.tt-event.purple { background: var(--purple-light); color: var(--purple); }
+.tt-event.teal { background: var(--teal-light); color: var(--teal); }
+.tt-event.amber { background: var(--amber-light); color: var(--amber); }
+.tt-event.conflict { background: var(--red-light); color: var(--red); border: 1px dashed var(--red); }
+.tt-empty-slot { min-height: 70px; }
+
+/* ══════════════ ANALYTICS ══════════════ */
+.analytics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+.analytics-grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+
+.utilization-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.util-cell {
+  padding: 12px; border-radius: 9px; text-align: center;
+  border: 1px solid var(--border); transition: transform .15s;
+}
+.util-cell:hover { transform: translateY(-2px); }
+.util-pct { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; line-height: 1.1; }
+.util-room { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.util-high { background: var(--green-light); border-color: rgba(16,185,129,.25); }
+.util-high .util-pct { color: var(--green); }
+.util-med { background: var(--amber-light); border-color: rgba(245,158,11,.25); }
+.util-med .util-pct { color: var(--amber); }
+.util-low { background: var(--red-light); border-color: rgba(239,68,68,.2); }
+.util-low .util-pct { color: var(--red); }
+
+.faculty-analytics-table { width: 100%; border-collapse: collapse; }
+.faculty-analytics-table th {
+  text-align: left; padding: 10px 14px; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .7px; font-weight: 700;
+  color: var(--text-3); border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.faculty-analytics-table td {
+  padding: 11px 14px; font-size: 12.5px; border-bottom: 1px solid var(--border);
+  color: var(--text-2); vertical-align: middle;
+}
+.faculty-analytics-table tr:last-child td { border-bottom: none; }
+.faculty-analytics-table tr:hover td { background: var(--bg); }
+.status-pill {
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.status-optimal { background: var(--green-light); color: var(--green); }
+.status-overload { background: var(--red-light); color: var(--red); }
+.status-under { background: var(--amber-light); color: var(--amber); }
+
+/* ══════════════ ANIMATIONS ══════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .6; transform: scale(.8); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.3);
+  border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite;
+}
+
+/* Loading overlay */
+.gen-overlay {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: rgba(245,247,252,.85); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+}
+.gen-overlay.show { display: flex; }
+.gen-box {
+  background: white; border-radius: 20px; padding: 36px 44px;
+  box-shadow: var(--shadow-md); text-align: center;
+}
+.gen-spinner-wrap {
+  width: 64px; height: 64px; margin: 0 auto 18px;
+  border-radius: 16px; background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+}
+.gen-spinner {
+  width: 28px; height: 28px; border: 3px solid rgba(255,255,255,.3);
+  border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite;
+}
+.gen-title { font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.gen-sub { font-size: 13px; color: var(--text-3); }
+.gen-steps { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; text-align: left; }
+.gen-step {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12.5px; color: var(--text-3); transition: color .3s;
+}
+.gen-step.done { color: var(--green); }
+.gen-step.active { color: var(--blue); font-weight: 600; }
+.gen-step-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--border); flex-shrink: 0;
+}
+.gen-step.done .gen-step-dot { background: var(--green); }
+.gen-step.active .gen-step-dot { background: var(--blue); animation: pulse 1s infinite; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 20px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-mid); }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
+.tab {
+  padding: 11px 20px; font-size: 13.5px; font-weight: 600; color: var(--text-3);
+  cursor: pointer; border-bottom: 2.5px solid transparent; transition: all .18s;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--blue); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+/* Success toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  background: var(--green); color: white; padding: 13px 20px;
+  border-radius: 10px; font-size: 13px; font-weight: 600;
+  box-shadow: 0 6px 20px rgba(16,185,129,.35);
+  display: flex; align-items: center; gap: 9px;
+  animation: fadeUp .3s ease both;
+  display: none;
+}
+.toast.show { display: flex; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="login-screen" class="screen active">
+  <div class="login-bg-orb a"></div>
+  <div class="login-bg-orb b"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+          <rect x="3" y="4" width="18" height="16" rx="2"/>
+          <path d="M3 9h18M9 4v5M15 4v5"/>
+          <circle cx="12" cy="15" r="2.5" fill="white" stroke="none"/>
+        </svg>
+      </div>
+      <span class="login-logo-text">Smart<span>Sched</span> AI</span>
+    </div>
+    <h2>Welcome back</h2>
+    <p>Sign in to your institution's scheduling dashboard</p>
+
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" value="admin@university.edu" placeholder="your@institution.edu">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" value="••••••••">
+      <div class="form-hint">Forgot password?</div>
+    </div>
+
+    <button class="btn-primary" onclick="goToDashboard()">Sign in to Dashboard</button>
+
+    <div class="login-divider"><span>Sign in as</span></div>
+    <div class="login-roles">
+      <div class="role-tag active" onclick="selectRole(this)">Admin</div>
+      <div class="role-tag" onclick="selectRole(this)">Faculty</div>
+      <div class="role-tag" onclick="selectRole(this)">HOD</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app-screen" class="screen">
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+          <rect x="3" y="4" width="18" height="16" rx="2"/>
+          <path d="M3 9h18M9 4v5M15 4v5"/>
+          <circle cx="12" cy="15" r="2" fill="white" stroke="none"/>
+        </svg>
+      </div>
+      <div>
+        <div class="sidebar-title">Smart<span>Sched</span></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('generate', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
+      Generate Timetable
+    </div>
+    <div class="nav-item" onclick="showPage('timetable', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+      </svg>
+      View Timetable
+    </div>
+
+    <div class="sidebar-section-label">Analytics</div>
+    <div class="nav-item" onclick="showPage('analytics', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 20V10M12 20V4M6 20v-6"/>
+      </svg>
+      Faculty Workload
+    </div>
+    <div class="nav-item" onclick="showPage('analytics', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3v18h18"/><path d="M7 16l4-6 4 4 4-8"/>
+      </svg>
+      Classroom Stats
+    </div>
+
+    <div class="sidebar-section-label">Tools</div>
+    <div class="nav-item" onclick="showPage('conflicts', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      Conflict Alerts
+      <span class="nav-badge">3</span>
+    </div>
+    <div class="nav-item" onclick="showPage('dashboard', this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2a9 9 0 10.001 18.001A9 9 0 0012 2z"/><path d="M12 6v6l4 2"/>
+      </svg>
+      AI Suggestions
+      <span class="nav-badge blue">5</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">AD</div>
+        <div>
+          <div class="user-name">Dr. Admin</div>
+          <div class="user-role">System Administrator</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="page-title">Dashboard Overview</div>
+        <div class="topbar-sub" id="page-sub">AY 2024–25 · Semester II · Last updated 2 min ago</div>
+      </div>
+      <div class="topbar-right">
+        <div class="ai-pill" onclick="showPage('dashboard', document.querySelector('.nav-item'))">
+          <div class="ai-pill-dot"></div>
+          AI Active
+        </div>
+        <div class="topbar-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
+        <div class="topbar-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+          <div class="notif-dot"></div>
+        </div>
+        <div class="topbar-btn" onclick="logout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DASHBOARD PAGE ═══ -->
+    <div class="page-body" id="page-dashboard">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon-wrap" style="background:var(--blue-light)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+            </div>
+            <span class="stat-trend trend-up">↑ 4%</span>
+          </div>
+          <div class="stat-value">142</div>
+          <div class="stat-label">Faculty Members</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon-wrap" style="background:var(--purple-light)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+            </div>
+            <span class="stat-trend trend-up">↑ 12%</span>
+          </div>
+          <div class="stat-value">284</div>
+          <div class="stat-label">Active Courses</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon-wrap" style="background:var(--teal-light)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </div>
+            <span class="stat-trend trend-neu">→ 0%</span>
+          </div>
+          <div class="stat-value">68</div>
+          <div class="stat-label">Classrooms</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon-wrap" style="background:var(--red-light)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <span class="stat-trend trend-down">↓ 2</span>
+          </div>
+          <div class="stat-value" style="color:var(--red)">3</div>
+          <div class="stat-label">Active Conflicts</div>
+        </div>
+      </div>
+
+      <!-- Row 1 -->
+      <div class="dash-grid">
+        <!-- Mini timetable -->
+        <div class="card" style="animation-delay:.1s">
+          <div class="card-header">
+            <div class="card-title">This Week's Timetable</div>
+            <div class="card-action" onclick="showPage('timetable', null)">View full →</div>
+          </div>
+          <div class="card-body">
+            <div class="mini-tt">
+              <div class="mini-tt-head"></div>
+              <div class="mini-tt-head">Mon</div>
+              <div class="mini-tt-head">Tue</div>
+              <div class="mini-tt-head">Wed</div>
+              <div class="mini-tt-head">Thu</div>
+              <div class="mini-tt-head">Fri</div>
+
+              <div class="mini-tt-time">8:00</div>
+              <div class="mini-tt-cell tt-blue">DS<br>LH-3</div>
+              <div class="mini-tt-cell tt-empty"></div>
+              <div class="mini-tt-cell tt-purple">ML<br>Lab-2</div>
+              <div class="mini-tt-cell tt-blue">DS<br>LH-3</div>
+              <div class="mini-tt-cell tt-empty"></div>
+
+              <div class="mini-tt-time">9:00</div>
+              <div class="mini-tt-cell tt-empty"></div>
+              <div class="mini-tt-cell tt-teal">DBMS<br>R-105</div>
+              <div class="mini-tt-cell tt-empty"></div>
+              <div class="mini-tt-cell tt-amber">OOP<br>R-102</div>
+              <div class="mini-tt-cell tt-teal">DBMS<br>R-105</div>
+
+              <div class="mini-tt-time">10:00</div>
+              <div class="mini-tt-cell tt-amber">OOP<br>R-102</div>
+              <div class="mini-tt-cell tt-blue">DS<br>LH-3</div>
+              <div class="mini-tt-cell tt-conflict">⚠ Conflict</div>
+              <div class="mini-tt-cell tt-empty"></div>
+              <div class="mini-tt-cell tt-purple">ML<br>Lab-2</div>
+
+              <div class="mini-tt-time">11:00</div>
+              <div class="mini-tt-cell tt-purple">ML<br>Lab-2</div>
+              <div class="mini-tt-cell tt-empty"></div>
+              <div class="mini-tt-cell tt-teal">DBMS<br>R-105</div>
+              <div class="mini-tt-cell tt-blue">DS<br>LH-3</div>
+              <div class="mini-tt-cell tt-amber">OOP<br>R-102</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workload bar -->
+        <div class="card" style="animation-delay:.15s">
+          <div class="card-header">
+            <div class="card-title">Weekly Lecture Hours</div>
+            <span style="font-size:11px;color:var(--text-3)">by department</span>
+          </div>
+          <div class="card-body">
+            <div class="bar-chart">
+              <div class="bar-col">
+                <div class="bar" style="height:75%;background:var(--blue);opacity:.85"></div>
+                <div class="bar-label">CSE</div>
+              </div>
+              <div class="bar-col">
+                <div class="bar" style="height:55%;background:var(--purple);opacity:.85"></div>
+                <div class="bar-label">ECE</div>
+              </div>
+              <div class="bar-col">
+                <div class="bar" style="height:90%;background:var(--teal);opacity:.85"></div>
+                <div class="bar-label">MECH</div>
+              </div>
+              <div class="bar-col">
+                <div class="bar" style="height:45%;background:var(--indigo);opacity:.85"></div>
+                <div class="bar-label">CIVIL</div>
+              </div>
+              <div class="bar-col">
+                <div class="bar" style="height:65%;background:var(--amber);opacity:.85"></div>
+                <div class="bar-label">MBA</div>
+              </div>
+              <div class="bar-col">
+                <div class="bar" style="height:40%;background:var(--blue);opacity:.6"></div>
+                <div class="bar-label">PHY</div>
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <div class="workload-list">
+                <div class="workload-item">
+                  <div class="w-avatar" style="background:linear-gradient(135deg,var(--blue),var(--indigo))">PK</div>
+                  <div class="w-info"><div class="w-name">Prof. P. Kumar</div><div class="w-dept">CSE</div></div>
+                  <div class="w-bar-wrap"><div class="w-bar-bg"><div class="w-bar-fill" style="width:85%;background:var(--blue)"></div></div></div>
+                  <div class="w-hrs">17h</div>
+                </div>
+                <div class="workload-item">
+                  <div class="w-avatar" style="background:linear-gradient(135deg,var(--purple),var(--indigo))">SR</div>
+                  <div class="w-info"><div class="w-name">Dr. S. Rao</div><div class="w-dept">ECE</div></div>
+                  <div class="w-bar-wrap"><div class="w-bar-bg"><div class="w-bar-fill" style="width:60%;background:var(--purple)"></div></div></div>
+                  <div class="w-hrs">12h</div>
+                </div>
+                <div class="workload-item">
+                  <div class="w-avatar" style="background:linear-gradient(135deg,var(--red),var(--amber))">AM</div>
+                  <div class="w-info"><div class="w-name">Dr. A. Mehta</div><div class="w-dept">MECH</div></div>
+                  <div class="w-bar-wrap"><div class="w-bar-bg"><div class="w-bar-fill" style="width:95%;background:var(--red)"></div></div></div>
+                  <div class="w-hrs" style="color:var(--red)">22h ⚠</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Suggestions -->
+        <div class="card ai-card" style="animation-delay:.2s">
+          <div class="card-header">
+            <div class="card-title">AI Recommendations</div>
+            <span class="ai-tag">✦ AI</span>
+          </div>
+          <div class="card-body" style="padding-top:10px">
+            <div class="ai-suggestion">
+              <div class="ai-sugg-icon" style="background:var(--red-light)">⚠️</div>
+              <div class="ai-sugg-content">
+                <div class="ai-sugg-title">Resolve Room Conflict</div>
+                <div class="ai-sugg-desc">CS301 & EC204 overlap in Room 105 on Wed 10–11am. Move EC204 to Room 203.</div>
+                <div class="ai-sugg-actions">
+                  <button class="btn-xs accept" onclick="showToast('Conflict resolved!')">Apply Fix</button>
+                  <button class="btn-xs dismiss">Dismiss</button>
+                </div>
+              </div>
+            </div>
+            <div class="ai-suggestion">
+              <div class="ai-sugg-icon" style="background:var(--amber-light)">⚡</div>
+              <div class="ai-sugg-content">
+                <div class="ai-sugg-title">Redistribute Workload</div>
+                <div class="ai-sugg-desc">Dr. Mehta is at 22h/week. Shift ME402 to Dr. Verma (10h available).</div>
+                <div class="ai-sugg-actions">
+                  <button class="btn-xs accept" onclick="showToast('Workload redistributed!')">Apply Fix</button>
+                  <button class="btn-xs dismiss">Dismiss</button>
+                </div>
+              </div>
+            </div>
+            <div class="ai-suggestion">
+              <div class="ai-sugg-icon" style="background:var(--green-light)">💡</div>
+              <div class="ai-sugg-content">
+                <div class="ai-sugg-title">Optimize Room Usage</div>
+                <div class="ai-sugg-desc">Lab-1 is only 38% utilized. Consider scheduling practicals Mon–Wed mornings.</div>
+                <div class="ai-sugg-actions">
+                  <button class="btn-xs accept" onclick="showToast('Optimization applied!')">Apply</button>
+                  <button class="btn-xs dismiss">Skip</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="dash-grid-2">
+        <!-- Classroom utilization donut -->
+        <div class="card" style="animation-delay:.25s">
+          <div class="card-header">
+            <div class="card-title">Classroom Utilization</div>
+            <span style="font-size:11px;color:var(--text-3)">This semester</span>
+          </div>
+          <div class="card-body">
+            <div class="donut-wrap">
+              <svg class="donut" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#EEF4FD" stroke-width="3.2"/>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--blue)" stroke-width="3.2"
+                  stroke-dasharray="52 48" stroke-dashoffset="25" transform="rotate(-90 18 18)"/>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--purple)" stroke-width="3.2"
+                  stroke-dasharray="24 76" stroke-dashoffset="-27" transform="rotate(-90 18 18)"/>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--teal)" stroke-width="3.2"
+                  stroke-dasharray="14 86" stroke-dashoffset="-51" transform="rotate(-90 18 18)"/>
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--border)" stroke-width="3.2"
+                  stroke-dasharray="10 90" stroke-dashoffset="-65" transform="rotate(-90 18 18)"/>
+                <text x="18" y="20" text-anchor="middle" font-size="6" font-weight="700" fill="var(--text)" font-family="Sora">76%</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><div class="legend-label">Lecture Halls</div><div class="legend-val">52%</div></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><div class="legend-label">Laboratories</div><div class="legend-val">24%</div></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div><div class="legend-label">Seminar Rooms</div><div class="legend-val">14%</div></div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div><div class="legend-label">Unutilized</div><div class="legend-val">10%</div></div>
+              </div>
+            </div>
+            <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div style="padding:10px;border-radius:9px;background:var(--blue-light);text-align:center">
+                <div style="font-family:Sora;font-size:18px;font-weight:700;color:var(--blue)">42</div>
+                <div style="font-size:11px;color:var(--text-3)">Rooms in use</div>
+              </div>
+              <div style="padding:10px;border-radius:9px;background:var(--green-light);text-align:center">
+                <div style="font-family:Sora;font-size:18px;font-weight:700;color:var(--green)">88%</div>
+                <div style="font-size:11px;color:var(--text-3)">Peak efficiency</div>
+              </div>
+              <div style="padding:10px;border-radius:9px;background:var(--red-light);text-align:center">
+                <div style="font-family:Sora;font-size:18px;font-weight:700;color:var(--red)">7</div>
+                <div style="font-size:11px;color:var(--text-3)">Under-utilized</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conflict summary -->
+        <div class="card" style="animation-delay:.3s">
+          <div class="card-header">
+            <div class="card-title">Active Conflicts</div>
+            <div class="card-action" onclick="showPage('conflicts', null)">View all →</div>
+          </div>
+          <div class="card-body">
+            <div class="conflict-list">
+              <div class="conflict-item high">
+                <div class="conflict-icon">🔴</div>
+                <div class="conflict-text">
+                  <strong>Double Booking – Room 105</strong>
+                  CS301 & EC204 scheduled simultaneously on Wednesday 10:00–11:00 AM
+                </div>
+                <div class="conflict-sev sev-high">High</div>
+              </div>
+              <div class="conflict-item med">
+                <div class="conflict-icon">🟡</div>
+                <div class="conflict-text">
+                  <strong>Faculty Overload – Dr. Mehta</strong>
+                  Assigned 22h/week, exceeds 18h maximum threshold
+                </div>
+                <div class="conflict-sev sev-med">Med</div>
+              </div>
+              <div class="conflict-item low">
+                <div class="conflict-icon">🔵</div>
+                <div class="conflict-text">
+                  <strong>Lab Capacity Warning – Lab-2</strong>
+                  ML Lab section B has 68 students, capacity is 60
+                </div>
+                <div class="conflict-sev sev-low">Low</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ GENERATE PAGE ═══ -->
+    <div class="page-body" id="page-generate" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:20px">
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Timetable Generation Configuration</div>
+              <span style="font-size:11.5px;color:var(--text-3)">Fill all required fields to generate</span>
+            </div>
+            <div class="card-body">
+              <div class="form-section-title">Basic Info</div>
+              <div class="form-grid-3">
+                <div>
+                  <label class="field-label">Academic Year</label>
+                  <select class="field-select">
+                    <option>2024–25</option><option>2025–26</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">Semester</label>
+                  <select class="field-select">
+                    <option>Semester I</option><option selected>Semester II</option>
+                    <option>Semester III</option><option>Semester IV</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">Department</label>
+                  <select class="field-select">
+                    <option>All Departments</option><option selected>CSE</option>
+                    <option>ECE</option><option>MECH</option><option>CIVIL</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid-2" style="margin-top:14px">
+                <div>
+                  <label class="field-label">Start Date</label>
+                  <input type="date" class="field-input" value="2025-01-15">
+                </div>
+                <div>
+                  <label class="field-label">End Date</label>
+                  <input type="date" class="field-input" value="2025-05-30">
+                </div>
+              </div>
+
+              <div class="form-section-title" style="margin-top:24px">Schedule Parameters</div>
+              <div class="form-grid-3">
+                <div>
+                  <label class="field-label">Working Days</label>
+                  <select class="field-select">
+                    <option selected>Mon–Fri (5 days)</option>
+                    <option>Mon–Sat (6 days)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">First Slot</label>
+                  <input type="time" class="field-input" value="08:00">
+                </div>
+                <div>
+                  <label class="field-label">Last Slot</label>
+                  <input type="time" class="field-input" value="17:00">
+                </div>
+              </div>
+              <div class="form-grid-2" style="margin-top:14px">
+                <div>
+                  <label class="field-label">Slot Duration (mins)</label>
+                  <select class="field-select">
+                    <option>45 mins</option><option selected>60 mins</option><option>90 mins</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label">Max Faculty Hours / Week</label>
+                  <input type="number" class="field-input" value="18" min="10" max="24">
+                  <div class="field-note">Recommended: 16–18 hrs/week</div>
+                </div>
+              </div>
+
+              <div class="form-section-title" style="margin-top:24px">Courses & Faculty</div>
+              <div style="margin-bottom:14px">
+                <label class="field-label">Courses to Schedule</label>
+                <div class="tag-input-wrap">
+                  <span class="tag-chip">CS301 <span class="remove">×</span></span>
+                  <span class="tag-chip">CS302 <span class="remove">×</span></span>
+                  <span class="tag-chip">CS303 <span class="remove">×</span></span>
+                  <span class="tag-chip">CS304 <span class="remove">×</span></span>
+                  <span class="tag-chip">CS401 <span class="remove">×</span></span>
+                  <input class="tag-input-inner" placeholder="Add course code…">
+                </div>
+              </div>
+              <div>
+                <label class="field-label">Available Classrooms</label>
+                <div class="tag-input-wrap">
+                  <span class="tag-chip" style="background:var(--teal-light);color:var(--teal)">LH-1 <span class="remove">×</span></span>
+                  <span class="tag-chip" style="background:var(--teal-light);color:var(--teal)">LH-2 <span class="remove">×</span></span>
+                  <span class="tag-chip" style="background:var(--teal-light);color:var(--teal)">LH-3 <span class="remove">×</span></span>
+                  <span class="tag-chip" style="background:var(--purple-light);color:var(--purple)">Lab-1 <span class="remove">×</span></span>
+                  <span class="tag-chip" style="background:var(--purple-light);color:var(--purple)">Lab-2 <span class="remove">×</span></span>
+                  <input class="tag-input-inner" placeholder="Add room…">
+                </div>
+              </div>
+
+              <div class="form-section-title" style="margin-top:24px">AI Constraints</div>
+              <div class="constraints-grid">
+                <div class="constraint-toggle on" onclick="this.classList.toggle('on')">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                  <div class="toggle-label">Avoid Back-to-Back Lectures</div>
+                </div>
+                <div class="constraint-toggle on" onclick="this.classList.toggle('on')">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                  <div class="toggle-label">Balance Workload Evenly</div>
+                </div>
+                <div class="constraint-toggle on" onclick="this.classList.toggle('on')">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                  <div class="toggle-label">Prefer Morning Labs</div>
+                </div>
+                <div class="constraint-toggle" onclick="this.classList.toggle('on')">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                  <div class="toggle-label">Faculty Time Preferences</div>
+                </div>
+                <div class="constraint-toggle on" onclick="this.classList.toggle('on')">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                  <div class="toggle-label">Conflict Auto-Detection</div>
+                </div>
+                <div class="constraint-toggle" onclick="this.classList.toggle('on')">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                  <div class="toggle-label">Allow Split Labs</div>
+                </div>
+              </div>
+
+              <div>
+                <label class="field-label" style="margin-top:18px;display:block">Special Instructions (Optional)</label>
+                <textarea class="field-textarea" placeholder="e.g. CS301 must be scheduled on Monday mornings. No classes on Friday afternoon for faculty meetings…"></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn-generate" onclick="runGeneration()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  </svg>
+                  Generate with AI
+                </button>
+                <button class="btn-secondary">Save Draft</button>
+                <button class="btn-secondary">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar panel -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card ai-card">
+            <div class="card-header">
+              <div class="card-title">AI Configuration Tips</div>
+              <span class="ai-tag">✦ AI</span>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;gap:9px;padding:10px;border-radius:8px;background:rgba(59,127,232,.07)">
+                <span style="font-size:16px">💡</span>
+                <div style="font-size:12px;color:var(--text-2)">Enable <strong>Avoid Back-to-Back</strong> to reduce faculty fatigue significantly.</div>
+              </div>
+              <div style="display:flex;gap:9px;padding:10px;border-radius:8px;background:rgba(124,92,252,.07)">
+                <span style="font-size:16px">🎯</span>
+                <div style="font-size:12px;color:var(--text-2)">AI optimizes for <strong>minimum conflicts</strong> first, then workload balance.</div>
+              </div>
+              <div style="display:flex;gap:9px;padding:10px;border-radius:8px;background:rgba(34,195,166,.07)">
+                <span style="font-size:16px">⚡</span>
+                <div style="font-size:12px;color:var(--text-2)">Estimated generation time: <strong>~12 seconds</strong> for 5 departments.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Previous Timetables</div></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg);border-radius:8px;cursor:pointer" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='var(--bg)'">
+                <div>
+                  <div style="font-size:12.5px;font-weight:600">AY 2024–25 Sem I</div>
+                  <div style="font-size:11px;color:var(--text-3)">Generated Dec 3, 2024</div>
+                </div>
+                <div style="font-size:11px;padding:3px 8px;background:var(--green-light);color:var(--green);border-radius:20px;font-weight:600">Active</div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg);border-radius:8px;cursor:pointer" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='var(--bg)'">
+                <div>
+                  <div style="font-size:12.5px;font-weight:600">AY 2023–24 Sem II</div>
+                  <div style="font-size:11px;color:var(--text-3)">Generated Jun 10, 2024</div>
+                </div>
+                <div style="font-size:11px;padding:3px 8px;background:var(--border);color:var(--text-3);border-radius:20px;font-weight:600">Archive</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TIMETABLE VIEW PAGE ═══ -->
+    <div class="page-body" id="page-timetable" style="display:none">
+      <div class="tt-controls">
+        <div class="tt-dept-filter">
+          <div class="filter-chip active" onclick="setActive(this)">All</div>
+          <div class="filter-chip" onclick="setActive(this)">CSE</div>
+          <div class="filter-chip purple" onclick="setActive(this)">ECE</div>
+          <div class="filter-chip teal" onclick="setActive(this)">MECH</div>
+          <div class="filter-chip" onclick="setActive(this)">CIVIL</div>
+        </div>
+        <div class="tt-export-btns">
+          <button class="btn-outline" onclick="showToast('PDF exported!')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Export PDF
+          </button>
+          <button class="btn-outline" onclick="showToast('Excel exported!')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Export Excel
+          </button>
+          <button class="btn-outline" onclick="showToast('Link copied!')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            Share
+          </button>
+        </div>
+      </div>
+
+      <div class="full-tt-wrap">
+        <div class="full-tt">
+          <!-- Header -->
+          <div class="tt-head-cell" style="background:white;font-size:10.5px;color:var(--text-3)">TIME</div>
+          <div class="tt-head-cell">Monday</div>
+          <div class="tt-head-cell">Tuesday</div>
+          <div class="tt-head-cell">Wednesday</div>
+          <div class="tt-head-cell">Thursday</div>
+          <div class="tt-head-cell">Friday</div>
+
+          <!-- 8–9 -->
+          <div class="tt-time-cell">8–9 AM</div>
+          <div class="tt-slot"><div class="tt-event blue"><div class="tt-event-course">CS301 – Data Structures</div><div class="tt-event-room">📍 LH-3 · 60 seats</div><div class="tt-event-faculty">👤 Dr. P. Kumar</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event purple"><div class="tt-event-course">CS404 – Machine Learning</div><div class="tt-event-room">📍 Lab-2 · 40 seats</div><div class="tt-event-faculty">👤 Dr. S. Rao</div></div></div>
+          <div class="tt-slot"><div class="tt-event blue"><div class="tt-event-course">CS301 – Data Structures</div><div class="tt-event-room">📍 LH-3 · 60 seats</div><div class="tt-event-faculty">👤 Dr. P. Kumar</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+
+          <!-- 9–10 -->
+          <div class="tt-time-cell">9–10 AM</div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event teal"><div class="tt-event-course">CS302 – DBMS</div><div class="tt-event-room">📍 R-105 · 50 seats</div><div class="tt-event-faculty">👤 Dr. A. Gupta</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event amber"><div class="tt-event-course">CS303 – OOP with Java</div><div class="tt-event-room">📍 R-102 · 55 seats</div><div class="tt-event-faculty">👤 Prof. R. Nair</div></div></div>
+          <div class="tt-slot"><div class="tt-event teal"><div class="tt-event-course">CS302 – DBMS</div><div class="tt-event-room">📍 R-105 · 50 seats</div><div class="tt-event-faculty">👤 Dr. A. Gupta</div></div></div>
+
+          <!-- 10–11 -->
+          <div class="tt-time-cell">10–11 AM</div>
+          <div class="tt-slot"><div class="tt-event amber"><div class="tt-event-course">CS303 – OOP with Java</div><div class="tt-event-room">📍 R-102 · 55 seats</div><div class="tt-event-faculty">👤 Prof. R. Nair</div></div></div>
+          <div class="tt-slot"><div class="tt-event blue"><div class="tt-event-course">CS301 – Data Structures</div><div class="tt-event-room">📍 LH-3 · 60 seats</div><div class="tt-event-faculty">👤 Dr. P. Kumar</div></div></div>
+          <div class="tt-slot"><div class="tt-event conflict"><div class="tt-event-course">⚠ CS301 & EC204</div><div class="tt-event-room">📍 R-105 – CONFLICT</div><div class="tt-event-faculty">Double booked!</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event purple"><div class="tt-event-course">CS404 – Machine Learning</div><div class="tt-event-room">📍 Lab-2 · 40 seats</div><div class="tt-event-faculty">👤 Dr. S. Rao</div></div></div>
+
+          <!-- 11–12 -->
+          <div class="tt-time-cell">11–12 PM</div>
+          <div class="tt-slot"><div class="tt-event purple"><div class="tt-event-course">CS404 – Machine Learning</div><div class="tt-event-room">📍 Lab-2 · 40 seats</div><div class="tt-event-faculty">👤 Dr. S. Rao</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event teal"><div class="tt-event-course">CS302 – DBMS</div><div class="tt-event-room">📍 R-105 · 50 seats</div><div class="tt-event-faculty">👤 Dr. A. Gupta</div></div></div>
+          <div class="tt-slot"><div class="tt-event blue"><div class="tt-event-course">CS301 – Data Structures</div><div class="tt-event-room">📍 LH-3 · 60 seats</div><div class="tt-event-faculty">👤 Dr. P. Kumar</div></div></div>
+          <div class="tt-slot"><div class="tt-event amber"><div class="tt-event-course">CS303 – OOP with Java</div><div class="tt-event-room">📍 R-102 · 55 seats</div><div class="tt-event-faculty">👤 Prof. R. Nair</div></div></div>
+
+          <!-- 12–1 -->
+          <div class="tt-time-cell" style="background:var(--amber-light);color:var(--amber)">Lunch</div>
+          <div class="tt-slot" style="background:var(--amber-light);opacity:.4"></div>
+          <div class="tt-slot" style="background:var(--amber-light);opacity:.4"></div>
+          <div class="tt-slot" style="background:var(--amber-light);opacity:.4"></div>
+          <div class="tt-slot" style="background:var(--amber-light);opacity:.4"></div>
+          <div class="tt-slot" style="background:var(--amber-light);opacity:.4"></div>
+
+          <!-- 1–2 -->
+          <div class="tt-time-cell">1–2 PM</div>
+          <div class="tt-slot"><div class="tt-event teal"><div class="tt-event-course">CS302 – DBMS</div><div class="tt-event-room">📍 R-105 · 50 seats</div><div class="tt-event-faculty">👤 Dr. A. Gupta</div></div></div>
+          <div class="tt-slot"><div class="tt-event purple"><div class="tt-event-course">CS404 – Machine Learning</div><div class="tt-event-room">📍 Lab-2 · 40 seats</div><div class="tt-event-faculty">👤 Dr. S. Rao</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event teal"><div class="tt-event-course">CS302 – DBMS</div><div class="tt-event-room">📍 R-105 · 50 seats</div><div class="tt-event-faculty">👤 Dr. A. Gupta</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+
+          <!-- 2–3 -->
+          <div class="tt-time-cell">2–3 PM</div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event amber"><div class="tt-event-course">CS303 – OOP with Java</div><div class="tt-event-room">📍 R-102 · 55 seats</div><div class="tt-event-faculty">👤 Prof. R. Nair</div></div></div>
+          <div class="tt-slot"><div class="tt-event blue"><div class="tt-event-course">CS401 – Networks</div><div class="tt-event-room">📍 LH-1 · 80 seats</div><div class="tt-event-faculty">👤 Dr. V. Sharma</div></div></div>
+          <div class="tt-slot tt-empty-slot"></div>
+          <div class="tt-slot"><div class="tt-event blue"><div class="tt-event-course">CS401 – Networks</div><div class="tt-event-room">📍 LH-1 · 80 seats</div><div class="tt-event-faculty">👤 Dr. V. Sharma</div></div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-2)"><div style="width:14px;height:14px;border-radius:4px;background:var(--blue-light)"></div>Lecture</div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-2)"><div style="width:14px;height:14px;border-radius:4px;background:var(--purple-light)"></div>Lab / Practical</div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-2)"><div style="width:14px;height:14px;border-radius:4px;background:var(--teal-light)"></div>Tutorial</div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-2)"><div style="width:14px;height:14px;border-radius:4px;background:var(--amber-light)"></div>Seminar</div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--red)"><div style="width:14px;height:14px;border-radius:4px;background:var(--red-light);border:1px dashed var(--red)"></div>Conflict</div>
+      </div>
+    </div>
+
+    <!-- ═══ ANALYTICS PAGE ═══ -->
+    <div class="page-body" id="page-analytics" style="display:none">
+      <div class="tabs">
+        <div class="tab active" onclick="setActiveTab(this)">Faculty Workload</div>
+        <div class="tab" onclick="setActiveTab(this)">Classroom Utilization</div>
+        <div class="tab" onclick="setActiveTab(this)">Department Overview</div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon-wrap" style="background:var(--blue-light)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              </svg>
+            </div>
+            <span class="stat-trend trend-up">↑ 3%</span>
+          </div>
+          <div class="stat-value">142</div>
+          <div class="stat-label">Total Faculty</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon-wrap" style="background:var(--green-light)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <span class="stat-trend trend-up">↑ 8%</span>
+          </div>
+          <div class="stat-value" style="color:var(--green)">118</div>
+          <div class="stat-label">Optimal Workload</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon-wrap" style="background:var(--red-light)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <span class="stat-trend trend-down">↓ 1</span>
+          </div>
+          <div class="stat-value" style="color:var(--red)">8</div>
+          <div class="stat-label">Overloaded Faculty</div>
+        </div>
+      </div>
+
+      <div class="analytics-grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Faculty Workload Details</div>
+            <span style="font-size:11px;color:var(--text-3)">Hours per week · Semester II</span>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="faculty-analytics-table">
+              <thead>
+                <tr>
+                  <th>Faculty</th>
+                  <th>Department</th>
+                  <th>Courses</th>
+                  <th>Hours/Week</th>
+                  <th>Workload</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div style="font-weight:600">Dr. P. Kumar</div></td>
+                  <td>CSE</td>
+                  <td>CS301, CS401</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="flex:1;height:5px;background:var(--bg);border-radius:10px;overflow:hidden"><div style="width:94%;height:100%;background:var(--red);border-radius:10px"></div></div>
+                      <span style="font-size:12px;font-weight:600;color:var(--red)">17h</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px">⬛⬛⬛⬛⬜</td>
+                  <td><span class="status-pill status-overload">Overloaded</span></td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600">Dr. S. Rao</div></td>
+                  <td>ECE</td>
+                  <td>CS404, EC101</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="flex:1;height:5px;background:var(--bg);border-radius:10px;overflow:hidden"><div style="width:66%;height:100%;background:var(--green);border-radius:10px"></div></div>
+                      <span style="font-size:12px;font-weight:600;color:var(--green)">12h</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px">⬛⬛⬛⬜⬜</td>
+                  <td><span class="status-pill status-optimal">Optimal</span></td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600">Dr. A. Gupta</div></td>
+                  <td>CSE</td>
+                  <td>CS302, CS501</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="flex:1;height:5px;background:var(--bg);border-radius:10px;overflow:hidden"><div style="width:77%;height:100%;background:var(--blue);border-radius:10px"></div></div>
+                      <span style="font-size:12px;font-weight:600">14h</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px">⬛⬛⬛⬛⬜</td>
+                  <td><span class="status-pill status-optimal">Optimal</span></td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600">Prof. R. Nair</div></td>
+                  <td>CSE</td>
+                  <td>CS303</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="flex:1;height:5px;background:var(--bg);border-radius:10px;overflow:hidden"><div style="width:44%;height:100%;background:var(--amber);border-radius:10px"></div></div>
+                      <span style="font-size:12px;font-weight:600;color:var(--amber)">8h</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px">⬛⬛⬜⬜⬜</td>
+                  <td><span class="status-pill status-under">Under-loaded</span></td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600">Dr. A. Mehta</div></td>
+                  <td>MECH</td>
+                  <td>ME401, ME402, ME403</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="flex:1;height:5px;background:var(--bg);border-radius:10px;overflow:hidden"><div style="width:100%;height:100%;background:var(--red);border-radius:10px"></div></div>
+                      <span style="font-size:12px;font-weight:600;color:var(--red)">22h ⚠</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px">⬛⬛⬛⬛⬛</td>
+                  <td><span class="status-pill status-overload">Overloaded</span></td>
+                </tr>
+                <tr>
+                  <td><div style="font-weight:600">Dr. V. Sharma</div></td>
+                  <td>CSE</td>
+                  <td>CS401, CS501</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <div style="flex:1;height:5px;background:var(--bg);border-radius:10px;overflow:hidden"><div style="width:83%;height:100%;background:var(--blue);border-radius:10px"></div></div>
+                      <span style="font-size:12px;font-weight:600">15h</span>
+                    </div>
+                  </td>
+                  <td style="font-size:12px">⬛⬛⬛⬛⬜</td>
+                  <td><span class="status-pill status-optimal">Optimal</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Classroom Utilization</div></div>
+            <div class="card-body">
+              <div class="utilization-grid">
+                <div class="util-cell util-high"><div class="util-pct">92%</div><div class="util-room">LH-1</div></div>
+                <div class="util-cell util-high"><div class="util-pct">87%</div><div class="util-room">LH-2</div></div>
+                <div class="util-cell util-high"><div class="util-pct">84%</div><div class="util-room">LH-3</div></div>
+                <div class="util-cell util-med"><div class="util-pct">61%</div><div class="util-room">R-102</div></div>
+                <div class="util-cell util-med"><div class="util-pct">58%</div><div class="util-room">R-105</div></div>
+                <div class="util-cell util-med"><div class="util-pct">72%</div><div class="util-room">Lab-1</div></div>
+                <div class="util-cell util-low"><div class="util-pct">38%</div><div class="util-room">Lab-2</div></div>
+                <div class="util-cell util-low"><div class="util-pct">45%</div><div class="util-room">Sem-A</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card ai-card">
+            <div class="card-header">
+              <div class="card-title">Optimization Score</div>
+              <span class="ai-tag">✦ AI</span>
+            </div>
+            <div class="card-body" style="text-align:center">
+              <div style="position:relative;display:inline-block;margin-bottom:12px">
+                <svg width="110" height="110" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--bg)" stroke-width="3"/>
+                  <circle cx="18" cy="18" r="15.9" fill="none"
+                    stroke="url(#scoreGrad)" stroke-width="3"
+                    stroke-dasharray="72 28" stroke-dashoffset="25"
+                    transform="rotate(-90 18 18)"/>
+                  <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%"><stop offset="0%" stop-color="var(--blue)"/><stop offset="100%" stop-color="var(--purple)"/></linearGradient></defs>
+                  <text x="18" y="16" text-anchor="middle" font-size="7" font-weight="700" fill="var(--text)" font-family="Sora">72</text>
+                  <text x="18" y="22" text-anchor="middle" font-size="3.5" fill="var(--text-3)" font-family="DM Sans">/ 100</text>
+                </svg>
+              </div>
+              <div style="font-size:12px;color:var(--text-2);line-height:1.5">
+                Schedule is <strong style="color:var(--blue)">Good</strong>. Resolving 3 conflicts could raise the score to <strong style="color:var(--green)">89/100</strong>.
+              </div>
+              <button class="btn-generate" style="margin-top:14px;font-size:12px;padding:10px 20px;width:100%;justify-content:center" onclick="showToast('AI auto-fix applied!')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Auto-Fix All Issues
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CONFLICTS PAGE ═══ -->
+    <div class="page-body" id="page-conflicts" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px">
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Active Conflict Alerts</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:12px;background:var(--red-light);color:var(--red);padding:3px 10px;border-radius:20px;font-weight:700">3 Active</span>
+              </div>
+            </div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+              <!-- Conflict 1 -->
+              <div style="border:1.5px solid rgba(239,68,68,.25);border-radius:12px;overflow:hidden">
+                <div style="background:var(--red-light);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:34px;height:34px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:16px">⚠️</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:700;color:var(--red)">Double Room Booking</div>
+                      <div style="font-size:11.5px;color:var(--text-2)">Wednesday, 10:00–11:00 AM · Room 105</div>
+                    </div>
+                  </div>
+                  <span style="background:var(--red);color:white;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px">HIGH PRIORITY</span>
+                </div>
+                <div style="padding:14px 16px;background:white">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+                    <div style="padding:11px;background:var(--bg);border-radius:8px;border-left:3px solid var(--blue)">
+                      <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Course A</div>
+                      <div style="font-size:13px;font-weight:700">CS301</div>
+                      <div style="font-size:12px;color:var(--text-2)">Data Structures</div>
+                      <div style="font-size:11.5px;color:var(--text-3);margin-top:4px">Dr. P. Kumar · 60 students</div>
+                    </div>
+                    <div style="padding:11px;background:var(--bg);border-radius:8px;border-left:3px solid var(--purple)">
+                      <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Course B</div>
+                      <div style="font-size:13px;font-weight:700">EC204</div>
+                      <div style="font-size:12px;color:var(--text-2)">Analog Circuits</div>
+                      <div style="font-size:11.5px;color:var(--text-3);margin-top:4px">Dr. S. Rao · 45 students</div>
+                    </div>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--text-2);margin-bottom:12px"><strong>AI Suggestion:</strong> Move EC204 to Room 203 (available, capacity 55) on the same slot. Zero additional conflicts detected.</div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn-generate" style="font-size:12.5px;padding:9px 18px" onclick="showToast('Conflict resolved automatically!')">✓ Apply AI Fix</button>
+                    <button class="btn-secondary" style="font-size:12.5px;padding:9px 16px">Manual Edit</button>
+                    <button class="btn-secondary" style="font-size:12.5px;padding:9px 16px;color:var(--red);border-color:rgba(239,68,68,.3)" onclick="showToast('Conflict ignored')">Ignore</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Conflict 2 -->
+              <div style="border:1.5px solid rgba(245,158,11,.25);border-radius:12px;overflow:hidden">
+                <div style="background:var(--amber-light);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:34px;height:34px;border-radius:9px;background:var(--amber);display:flex;align-items:center;justify-content:center;font-size:16px">👤</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:700;color:var(--amber)">Faculty Overload</div>
+                      <div style="font-size:11.5px;color:var(--text-2)">Dr. A. Mehta · Mechanical Engineering</div>
+                    </div>
+                  </div>
+                  <span style="background:var(--amber);color:white;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px">MEDIUM</span>
+                </div>
+                <div style="padding:14px 16px;background:white">
+                  <div style="font-size:12.5px;color:var(--text-2);margin-bottom:12px">Dr. Mehta is assigned <strong>22 hours/week</strong>, exceeding the policy maximum of <strong>18 hours/week</strong> by 4 hours. This affects 3 courses: ME401, ME402, ME403.</div>
+                  <div style="background:var(--bg);border-radius:8px;padding:11px;margin-bottom:12px;font-size:12.5px;color:var(--text-2)">
+                    <strong>AI Suggestion:</strong> Reassign ME402 (4h/week) to Dr. P. Verma who has 10h available capacity this semester.
+                  </div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn-generate" style="font-size:12.5px;padding:9px 18px" onclick="showToast('Workload reassigned!')">✓ Apply Fix</button>
+                    <button class="btn-secondary" style="font-size:12.5px;padding:9px 16px">Manual Edit</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Conflict 3 -->
+              <div style="border:1.5px solid rgba(59,127,232,.2);border-radius:12px;overflow:hidden">
+                <div style="background:var(--blue-light);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:34px;height:34px;border-radius:9px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:16px">🏫</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:700;color:var(--blue)">Capacity Warning</div>
+                      <div style="font-size:11.5px;color:var(--text-2)">Lab-2 · CS404 Machine Learning (Section B)</div>
+                    </div>
+                  </div>
+                  <span style="background:var(--blue);color:white;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px">LOW</span>
+                </div>
+                <div style="padding:14px 16px;background:white">
+                  <div style="font-size:12.5px;color:var(--text-2);margin-bottom:12px">ML Lab Section B has <strong>68 enrolled students</strong> but Lab-2 has a capacity of only <strong>60 seats</strong>. 8 students cannot be accommodated.</div>
+                  <div style="display:flex;gap:8px">
+                    <button class="btn-generate" style="font-size:12.5px;padding:9px 18px;background:linear-gradient(135deg,var(--blue),var(--indigo))" onclick="showToast('Room upgraded to Lab-1!')">Move to Lab-1 (80 seats)</button>
+                    <button class="btn-secondary" style="font-size:12.5px;padding:9px 16px">Split Section</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary sidebar -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card ai-card">
+            <div class="card-header">
+              <div class="card-title">Resolution Status</div>
+              <span class="ai-tag">✦ AI</span>
+            </div>
+            <div class="card-body">
+              <div style="text-align:center;margin-bottom:16px">
+                <div style="font-family:Sora;font-size:36px;font-weight:700;color:var(--red)">3</div>
+                <div style="font-size:12px;color:var(--text-3)">Unresolved conflicts</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;background:var(--red-light);border-radius:8px">
+                  <span style="font-size:12.5px;font-weight:600;color:var(--red)">High Priority</span>
+                  <span style="font-family:Sora;font-size:16px;font-weight:700;color:var(--red)">1</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;background:var(--amber-light);border-radius:8px">
+                  <span style="font-size:12.5px;font-weight:600;color:var(--amber)">Medium Priority</span>
+                  <span style="font-family:Sora;font-size:16px;font-weight:700;color:var(--amber)">1</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;background:var(--blue-light);border-radius:8px">
+                  <span style="font-size:12.5px;font-weight:600;color:var(--blue)">Low Priority</span>
+                  <span style="font-family:Sora;font-size:16px;font-weight:700;color:var(--blue)">1</span>
+                </div>
+              </div>
+              <button class="btn-generate" style="width:100%;justify-content:center;margin-top:14px;font-size:13px" onclick="showToast('All conflicts resolved by AI!')">
+                ✦ Resolve All with AI
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Conflict History</div></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:12px;font-weight:600">Jan 15, 2025</div>
+                  <div style="font-size:11px;color:var(--text-3)">5 conflicts generated</div>
+                </div>
+                <div style="font-size:11px;color:var(--green);font-weight:600">5/5 resolved</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:12px;font-weight:600">Dec 3, 2024</div>
+                  <div style="font-size:11px;color:var(--text-3)">2 conflicts generated</div>
+                </div>
+                <div style="font-size:11px;color:var(--green);font-weight:600">2/2 resolved</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+                <div>
+                  <div style="font-size:12px;font-weight:600">Jun 10, 2024</div>
+                  <div style="font-size:11px;color:var(--text-3)">8 conflicts generated</div>
+                </div>
+                <div style="font-size:11px;color:var(--green);font-weight:600">8/8 resolved</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- AI Generation Overlay -->
+<div class="gen-overlay" id="gen-overlay">
+  <div class="gen-box">
+    <div class="gen-spinner-wrap"><div class="gen-spinner"></div></div>
+    <div class="gen-title">Generating Timetable</div>
+    <div class="gen-sub">AI is optimizing your schedule…</div>
+    <div class="gen-steps">
+      <div class="gen-step done" id="step1"><div class="gen-step-dot"></div>Validating inputs & constraints</div>
+      <div class="gen-step done" id="step2"><div class="gen-step-dot"></div>Loading faculty availability</div>
+      <div class="gen-step active" id="step3"><div class="gen-step-dot"></div>Optimizing slot assignments</div>
+      <div class="gen-step" id="step4"><div class="gen-step-dot"></div>Detecting & resolving conflicts</div>
+      <div class="gen-step" id="step5"><div class="gen-step-dot"></div>Finalizing & exporting schedule</div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg">Done!</span>
+</div>
+
+<script>
+function goToDashboard() {
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+}
+
+function logout() {
+  document.getElementById('app-screen').classList.remove('active');
+  document.getElementById('login-screen').classList.add('active');
+}
+
+function selectRole(el) {
+  document.querySelectorAll('.role-tag').forEach(r => r.classList.remove('active'));
+  el.classList.add('active');
+}
+
+const pageTitles = {
+  dashboard: ['Dashboard Overview', 'AY 2024–25 · Semester II · Last updated 2 min ago'],
+  generate: ['Generate Timetable', 'Configure AI parameters and generate a new schedule'],
+  timetable: ['Timetable View', 'CSE Department · AY 2024–25 Semester II'],
+  analytics: ['Faculty & Analytics', 'Workload analysis and classroom utilization statistics'],
+  conflicts: ['Conflict Detection', '3 active conflicts require attention']
+};
+
+function showPage(pageId, navEl) {
+  document.querySelectorAll('.page-body').forEach(p => p.style.display = 'none');
+  const el = document.getElementById('page-' + pageId);
+  if (el) el.style.display = 'block';
+  if (pageTitles[pageId]) {
+    document.getElementById('page-title').textContent = pageTitles[pageId][0];
+    document.getElementById('page-sub').textContent = pageTitles[pageId][1];
+  }
+  if (navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navEl.classList.add('active');
+  }
+}
+
+function setActive(el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setActiveTab(el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function runGeneration() {
+  const overlay = document.getElementById('gen-overlay');
+  overlay.classList.add('show');
+  const steps = ['step3', 'step4', 'step5'];
+  let i = 0;
+  function nextStep() {
+    if (i > 0) {
+      document.getElementById(steps[i-1]).classList.remove('active');
+      document.getElementById(steps[i-1]).classList.add('done');
+    }
+    if (i < steps.length) {
+      document.getElementById(steps[i]).classList.add('active');
+      i++;
+      setTimeout(nextStep, 1400);
+    } else {
+      setTimeout(() => {
+        overlay.classList.remove('show');
+        showPage('timetable', document.querySelectorAll('.nav-item')[2]);
+        showToast('Timetable generated successfully!');
+        // Reset steps
+        steps.forEach(s => {
+          document.getElementById(s).classList.remove('active','done');
+        });
+        document.getElementById('step3').classList.add('active');
+      }, 800);
+    }
+  }
+  setTimeout(nextStep, 600);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDqd8h3O7trrokxHTW7WKl1zlvAf29ZLao",
+  authDomain: "smartsched-ai-4a0b8.firebaseapp.com",
+  projectId: "smartsched-ai-4a0b8",
+  storageBucket: "smartsched-ai-4a0b8.firebasestorage.app",
+  messagingSenderId: "116839128504",
+  appId: "1:116839128504:web:6ce1f38a5981ea4cd4034d",
+  measurementId: "G-DBKTJWJ01E"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+console.log("Firebase Connected Successfully!");
+</script>
+</body>
+</html>
